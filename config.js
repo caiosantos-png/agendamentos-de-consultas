@@ -5,7 +5,7 @@
    os dados já venham do banco, semeados pelo supabase_schema.sql.
    ========================================================= */
 const DEFAULT_SETTINGS = {
-  companyEmailDomain: "conexaorastreadores.com.br",
+  companyEmailDomain: "suaempresa.com.br",
   daysAhead: 30
 };
 
@@ -100,13 +100,16 @@ async function syncArrayDiff(table, prevList, newList, toRow) {
 /* =========================================================
    PROFISSIONAIS
    ========================================================= */
-function getProfessionals() { return professionalsCache; }
+function getProfessionals() { return professionalsCache.map(p => ({ ...p })); }
 function saveProfessionals(list) {
   const prev = professionalsCache;
   professionalsCache = list;
   syncArrayDiff("professionals", prev, list, M.profToRow);
 }
-function getProfessionalById(id) { return professionalsCache.find(p => p.id === id) || null; }
+function getProfessionalById(id) {
+  const p = professionalsCache.find(p => p.id === id);
+  return p ? { ...p } : null;
+}
 function addProfessional(prof) { saveProfessionals([...professionalsCache, prof]); }
 function updateProfessional(id, changes) {
   saveProfessionals(professionalsCache.map(p => (p.id === id ? { ...p, ...changes } : p)));
@@ -116,7 +119,7 @@ function deleteProfessional(id) { saveProfessionals(professionalsCache.filter(p 
 /* =========================================================
    AGENDAMENTOS
    ========================================================= */
-function getBookings() { return bookingsCache; }
+function getBookings() { return bookingsCache.map(b => ({ ...b })); }
 function saveBookings(list) {
   const prev = bookingsCache;
   bookingsCache = list;
@@ -144,7 +147,7 @@ async function createBookingSafely(booking) {
 /* =========================================================
    BLOQUEIOS PONTUAIS
    ========================================================= */
-function getBlockedSlots() { return blockedSlotsCache; }
+function getBlockedSlots() { return blockedSlotsCache.map(b => ({ ...b })); }
 function saveBlockedSlots(list) {
   const prev = blockedSlotsCache;
   blockedSlotsCache = list;
@@ -157,7 +160,7 @@ function isSlotBlocked(profId, date, time) {
 /* =========================================================
    HORÁRIOS EXTRAS
    ========================================================= */
-function getExtraSlots() { return extraSlotsCache; }
+function getExtraSlots() { return extraSlotsCache.map(s => ({ ...s })); }
 function saveExtraSlots(list) {
   const prev = extraSlotsCache;
   extraSlotsCache = list;
@@ -167,7 +170,7 @@ function saveExtraSlots(list) {
 /* =========================================================
    RETORNOS
    ========================================================= */
-function getRetornos() { return retornosCache; }
+function getRetornos() { return retornosCache.map(r => ({ ...r })); }
 function saveRetornos(list) {
   const prev = retornosCache;
   retornosCache = list;
@@ -177,7 +180,7 @@ function saveRetornos(list) {
 /* =========================================================
    NOTIFICAÇÕES
    ========================================================= */
-function getNotifications() { return notificationsCache; }
+function getNotifications() { return notificationsCache.map(n => ({ ...n })); }
 function saveNotifications(list) {
   const prev = notificationsCache;
   notificationsCache = list;
