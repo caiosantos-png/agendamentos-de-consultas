@@ -69,12 +69,11 @@ create table settings (
 -- ===== DADOS INICIAIS =====
 cat > /home/claude/agendamento/atualizar_dominio_email.sql << 'EOF' 
   update settings 
-  set company_email_domain = 'conexaorastreadores.com.br' 
-   where id = 1; 
+    set company_email_domain = 'conexaorastreadores.com.br' 
+     where id = 1; 
 
 EOF cat /home/claude/agendamento/atualizar_dominio_email.sql
-
-  insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
+ insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
 
 insert into professionals (id, tag, name, role, description, work_days, shifts, slot_minutes) values
 ('medica', 'Saúde física', 'Dra. Fernanda Lima', 'Médica do trabalho',
@@ -89,11 +88,8 @@ insert into professionals (id, tag, name, role, description, work_days, shifts, 
 
 update settings 
   set company_email_domain = 'conexaorastreadores.com.br' 
-  where id = 1;
--- ===== TEMPO REAL (para todos verem mudanças na hora) =====
-alter publication supabase_realtime add table
-  professionals, bookings, blocked_slots, extra_slots, retornos, notifications, settings;
-
+   where id = 1;
+   
 -- ===== ACESSO =====
 -- Sem login de usuário final (colaboradores não se autenticam), então liberamos
 -- leitura/escrita geral. Isso é equivalente ao aviso de segurança já feito antes:
