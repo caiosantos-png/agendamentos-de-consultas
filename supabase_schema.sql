@@ -67,13 +67,7 @@ create table settings (
 );
 
 -- ===== DADOS INICIAIS =====
-cat > /home/claude/agendamento/atualizar_dominio_email.sql << 'EOF' 
-  update settings 
-    set company_email_domain = 'conexaorastreadores.com.br' 
-     where id = 1; 
-
-EOF cat /home/claude/agendamento/atualizar_dominio_email.sql
- insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
+insert into settings (id, company_email_domain, days_ahead) values (1, 'suaempresa.com.br', 30);
 
 insert into professionals (id, tag, name, role, description, work_days, shifts, slot_minutes) values
 ('medica', 'Saúde física', 'Dra. Fernanda Lima', 'Médica do trabalho',
@@ -86,10 +80,10 @@ insert into professionals (id, tag, name, role, description, work_days, shifts, 
  'Conversas sobre carreira, desempenho e alinhamento com a liderança.',
  '{1,2,3,4,5}', '[{"start":"09:00","end":"12:00"},{"start":"14:00","end":"17:00"}]', 30);
 
-update settings 
-  set company_email_domain = 'conexaorastreadores.com.br' 
-   where id = 1;
-   
+-- ===== TEMPO REAL (para todos verem mudanças na hora) =====
+alter publication supabase_realtime add table
+  professionals, bookings, blocked_slots, extra_slots, retornos, notifications, settings;
+
 -- ===== ACESSO =====
 -- Sem login de usuário final (colaboradores não se autenticam), então liberamos
 -- leitura/escrita geral. Isso é equivalente ao aviso de segurança já feito antes:
@@ -105,6 +99,11 @@ alter table settings enable row level security;
 
 create policy "public access" on professionals for all using (true) with check (true);
 create policy "public access" on bookings for all using (true) with check (true);
+create policy "public access" on blocked_slots for all using (true) with check (true);
+create policy "public access" on extra_slots for all using (true) with check (true);
+create policy "public access" on retornos for all using (true) with check (true);
+create policy "public access" on notifications for all using (true) with check (true);
+create policy "public access" on settings for all using (true) with check (true);
 create policy "public access" on blocked_slots for all using (true) with check (true);
 create policy "public access" on extra_slots for all using (true) with check (true);
 create policy "public access" on retornos for all using (true) with check (true);
