@@ -67,7 +67,7 @@ create table settings (
 );
 
 -- ===== DADOS INICIAIS =====
-insert into settings (id, company_email_domain, days_ahead) values (1, 'suaempresa.com.br', 30);
+insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
 
 insert into professionals (id, tag, name, role, description, work_days, shifts, slot_minutes) values
 ('medica', 'Saúde física', 'Dra. Fernanda Lima', 'Médica do trabalho',
