@@ -67,7 +67,14 @@ create table settings (
 );
 
 -- ===== DADOS INICIAIS =====
-insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
+cat > /home/claude/agendamento/atualizar_dominio_email.sql << 'EOF' 
+  update settings 
+  set company_email_domain = 'conexaorastreadores.com.br' 
+   where id = 1; 
+
+EOF cat /home/claude/agendamento/atualizar_dominio_email.sql
+
+  insert into settings (id, company_email_domain, days_ahead) values (1, 'conexaorastreadores.com.br', 30);
 
 insert into professionals (id, tag, name, role, description, work_days, shifts, slot_minutes) values
 ('medica', 'Saúde física', 'Dra. Fernanda Lima', 'Médica do trabalho',
@@ -80,6 +87,9 @@ insert into professionals (id, tag, name, role, description, work_days, shifts, 
  'Conversas sobre carreira, desempenho e alinhamento com a liderança.',
  '{1,2,3,4,5}', '[{"start":"09:00","end":"12:00"},{"start":"14:00","end":"17:00"}]', 30);
 
+update settings 
+  set company_email_domain = 'conexaorastreadores.com.br' 
+  where id = 1;
 -- ===== TEMPO REAL (para todos verem mudanças na hora) =====
 alter publication supabase_realtime add table
   professionals, bookings, blocked_slots, extra_slots, retornos, notifications, settings;
