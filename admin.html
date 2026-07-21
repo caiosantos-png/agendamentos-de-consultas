@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Administrativo | Agendamento de Consultas</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ===================== TELA DE LOGIN ===================== -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <img src="logo.png" alt="Logo da empresa" class="brand-mark login-logo">
+    <h1>Painel Administrativo</h1>
+    <p class="hint">Acesso restrito à médica, psicóloga e gestão de pessoas.</p>
+    <form id="login-form" novalidate>
+      <label for="input-username">Usuário
+        <input id="input-username" type="text" autocomplete="username" required placeholder="admin">
+      </label>
+      <label for="input-password">Senha
+        <input id="input-password" type="password" autocomplete="current-password" required placeholder="Digite a senha">
+      </label>
+      <p id="login-error" class="error-msg" hidden>Usuário ou senha incorretos.</p>
+      <button type="submit" class="btn-primary">Entrar</button>
+    </form>
+    <p class="hint small-hint">
+      Esta tela é uma trava simples contra acesso casual — não é segurança real,
+      já que este sistema roda inteiramente no navegador, sem servidor.
+    </p>
+    <a href="index.html" class="back-link">&larr; Voltar para o agendamento</a>
+  </div>
+</div>
+
+<!-- ===================== PAINEL (após login) ===================== -->
+<div id="admin-app" class="admin-layout" hidden>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="logo.png" alt="Logo da empresa" class="brand-mark">
+      <div>
+        <strong>Painel Admin</strong>
+        <span>Uso interno</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="dashboard" type="button">
+        <span class="nav-icon">▦</span> Dashboard
+      </button>
+      <button class="nav-item" data-page="profissionais" type="button">
+        <span class="nav-icon">◍</span> Profissionais
+      </button>
+      <button class="nav-item" data-page="agenda" type="button">
+        <span class="nav-icon">▤</span> Agenda
+      </button>
+      <button class="nav-item" data-page="agendamentos" type="button">
+        <span class="nav-icon">▥</span> Agendamentos
+      </button>
+      <button class="nav-item" data-page="retornos" type="button">
+        <span class="nav-icon">↺</span> Retornos <span id="badge-retornos" class="badge-count" hidden>0</span>
+      </button>
+      <button class="nav-item" data-page="notificacoes" type="button">
+        <span class="nav-icon">◔</span> Notificações <span id="badge-notif" class="badge-count" hidden>0</span>
+      </button>
+      <button class="nav-item" data-page="configuracoes" type="button">
+        <span class="nav-icon">⚙</span> Configurações
+      </button>
+    </nav>
+
+    <button id="btn-logout" class="nav-item nav-logout" type="button">
+      <span class="nav-icon">⏻</span> Sair
+    </button>
+  </aside>
+
+  <main id="admin-main" class="admin-main">
+
+    <!-- ===== Dashboard ===== -->
+    <section id="page-dashboard" class="admin-page active">
+      <h2>Dashboard</h2>
+      <div id="overdue-alert" class="alert-danger" hidden></div>
+      <div class="stat-grid">
+        <div class="stat-card"><span id="stat-total">0</span><label>Total de atendimentos agendados</label></div>
+        <div class="stat-card"><span id="stat-today">0</span><label>Atendimentos de hoje</label></div>
+        <div class="stat-card"><span id="stat-free">0</span><label>Horários disponíveis</label></div>
+        <div class="stat-card"><span id="stat-blocked">0</span><label>Horários bloqueados</label></div>
+        <div class="stat-card"><span id="stat-retornos-pendentes">0</span><label>Retornos pendentes</label></div>
+        <div class="stat-card stat-warning"><span id="stat-retornos-vencidos">0</span><label>Retornos vencidos</label></div>
+      </div>
+    </section>
+
+    <!-- ===== Profissionais ===== -->
+    <section id="page-profissionais" class="admin-page">
+      <div class="page-head">
+        <h2>Profissionais</h2>
+        <button id="btn-add-prof" class="btn-primary btn-small-primary" type="button">+ Adicionar profissional</button>
+      </div>
+      <div id="prof-list" class="admin-list"></div>
+    </section>
+
+    <!-- ===== Agenda ===== -->
+    <section id="page-agenda" class="admin-page">
+      <h2>Agenda</h2>
+      <p class="hint">Crie horários extras fora da agenda semanal padrão, ou bloqueie/libere horários pontuais.</p>
+
+      <label class="filter-field wide">Profissional
+        <select id="agenda-prof"></select>
+      </label>
+
+      <div class="agenda-create">
+        <label class="filter-field">Nova data
+          <input type="date" id="agenda-new-date">
+        </label>
+        <label class="filter-field">Novo horário
+          <input type="time" id="agenda-new-time">
+        </label>
+        <button id="agenda-add-slot" class="btn-primary btn-small-primary" type="button">Criar horário disponível</button>
+      </div>
+
+      <div id="avail-date-list" class="chip-grid" style="margin-top:16px;"></div>
+      <div id="avail-slot-list" class="admin-list" style="margin-top:18px;"></div>
+    </section>
+
+    <!-- ===== Agendamentos ===== -->
+    <section id="page-agendamentos" class="admin-page">
+      <h2>Agendamentos</h2>
+      <div class="filters">
+        <label class="filter-field">Profissional
+          <select id="filter-prof"><option value="todos">Todos</option></select>
+        </label>
+        <label class="filter-field">Colaborador
+          <input type="text" id="filter-search" placeholder="Nome ou e-mail">
+        </label>
+        <label class="filter-field">De
+          <input type="date" id="filter-from">
+        </label>
+        <label class="filter-field">Até
+          <input type="date" id="filter-to">
+        </label>
+        <label class="filter-field">Status
+          <select id="filter-status">
+            <option value="todos">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="confirmado">Confirmado</option>
+            <option value="concluido">Concluído</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Colaborador</th><th>E-mail</th><th>Profissional</th>
+              <th>Data</th><th>Horário</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-table-body"></tbody>
+        </table>
+      </div>
+      <p id="bookings-empty" class="empty-msg" hidden>Nenhum agendamento encontrado.</p>
+    </section>
+
+    <!-- ===== Retornos ===== -->
+    <section id="page-retornos" class="admin-page">
+      <h2>Retornos</h2>
+      <p class="hint">Acompanhamentos marcados para revisão futura (ex.: "voltar em 60 dias").</p>
+      <div id="retornos-list" class="admin-list"></div>
+      <p id="retornos-empty" class="empty-msg" hidden>Nenhum retorno registrado ainda.</p>
+    </section>
+
+    <!-- ===== Notificações ===== -->
+    <section id="page-notificacoes" class="admin-page">
+      <div class="page-head">
+        <h2>Notificações</h2>
+        <button id="btn-mark-all-read" class="btn-link" type="button">Marcar tudo como lido</button>
+      </div>
+      <div id="notif-list-full" class="admin-list"></div>
+      <p id="notif-empty" class="empty-msg" hidden>Nenhuma notificação ainda.</p>
+    </section>
+
+    <!-- ===== Configurações ===== -->
+    <section id="page-configuracoes" class="admin-page">
+      <h2>Configurações</h2>
+
+      <form id="settings-form" class="settings-form">
+        <h3>Regras gerais</h3>
+        <label>Domínio de e-mail obrigatório (deixe em branco para aceitar qualquer e-mail)
+          <input type="text" id="cfg-domain" placeholder="suaempresa.com.br">
+        </label>
+        <label>Dias de antecedência abertos para agendamento
+          <input type="number" id="cfg-days-ahead" min="1" max="180">
+        </label>
+        <button type="submit" class="btn-primary btn-small-primary">Salvar configurações</button>
+        <p id="settings-ok" class="inline-note" hidden>Configurações salvas.</p>
+      </form>
+
+      <form id="password-form" class="settings-form">
+        <h3>Trocar credenciais de acesso</h3>
+        <label>Novo usuário
+          <input type="text" id="cfg-username" required>
+        </label>
+        <label>Nova senha
+          <input type="password" id="cfg-password" required>
+        </label>
+        <button type="submit" class="btn-primary btn-small-primary">Atualizar credenciais</button>
+        <p id="password-ok" class="inline-note" hidden>Credenciais atualizadas.</p>
+      </form>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal genérico (Visualizar / Editar / Reagendar / Agendar retorno) -->
+<div id="generic-modal" class="modal-overlay" hidden>
+  <div class="modal modal-wide" role="dialog" aria-modal="true">
+    <button id="generic-modal-close" class="modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div id="generic-modal-body"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

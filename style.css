@@ -1,0 +1,307 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --bg: #EEF3F8;
+  --surface: #FFFFFF;
+  --ink: #0E2233;
+  --ink-soft: #52697D;
+  --primary: #0B4C8C;
+  --primary-dark: #06213B;
+  --primary-tint: #DCEBF9;
+  --accent: #22A8E0;
+  --accent-tint: #DEF3FC;
+  --line: #D6E2EC;
+  --danger: #B4433A;
+  --danger-tint: #F6E2DF;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(6,33,59,.10);
+}
+
+*{box-sizing:border-box;}
+
+/* Garante que o atributo "hidden" do HTML sempre funcione, mesmo em elementos
+   que tenham display:flex ou display:grid definidos por classe. Sem esta regra,
+   o CSS do elemento pode "vencer" o hidden e ele continuar aparecendo. */
+[hidden]{display:none !important;}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+h1,h2{
+  font-family:'Fraunces', Georgia, serif;
+  font-weight:600;
+  color:var(--primary-dark);
+  margin:0;
+}
+
+.wrap{
+  max-width:720px;
+  margin:0 auto;
+  padding:32px 20px 60px;
+}
+
+/* Header */
+.top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:28px;
+}
+.brand{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+.brand-mark{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  flex-shrink:0;
+  margin-top:2px;
+  object-fit:cover;
+  box-shadow:0 2px 8px rgba(6,33,59,.25);
+}
+.brand h1{font-size:1.5rem;}
+.brand p{margin:4px 0 0;color:var(--ink-soft);font-size:.92rem;}
+
+.btn-ghost{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--primary-dark);
+  padding:9px 16px;
+  border-radius:999px;
+  font:inherit;
+  font-weight:500;
+  font-size:.88rem;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.btn-ghost:hover{background:var(--primary-tint);}
+.header-actions{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+a.btn-ghost{text-decoration:none;display:inline-block;}
+.btn-admin{border-color:var(--primary);color:var(--primary-dark);}
+
+/* Steps indicator */
+.steps{
+  list-style:none;
+  display:flex;
+  gap:6px;
+  padding:0;
+  margin:0 0 28px;
+}
+.steps li{
+  flex:1;
+  font-size:.72rem;
+  font-weight:600;
+  color:var(--ink-soft);
+  border-top:3px solid var(--line);
+  padding-top:8px;
+  letter-spacing:.03em;
+}
+.steps li span{display:block;font-weight:500;text-transform:none;font-size:.78rem;margin-top:2px;}
+.steps li.on{border-top-color:var(--primary);color:var(--primary-dark);}
+.steps li.done{border-top-color:var(--accent);}
+
+/* Steps sections */
+.step{display:none;}
+.step.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+main h2{font-size:1.25rem;margin-bottom:4px;}
+.hint{color:var(--ink-soft);font-size:.88rem;margin:4px 0 18px;}
+
+.btn-back{
+  background:none;
+  border:none;
+  color:var(--primary);
+  font:inherit;
+  font-weight:500;
+  font-size:.85rem;
+  padding:0 0 14px;
+  cursor:pointer;
+}
+.btn-back:hover{text-decoration:underline;}
+
+/* Professional cards */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  margin-top:16px;
+}
+.prof-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:20px;
+  text-align:left;
+  cursor:pointer;
+  font:inherit;
+  box-shadow:var(--shadow);
+  transition:transform .15s ease, border-color .15s ease;
+}
+.prof-card:hover{transform:translateY(-2px);border-color:var(--primary);}
+.prof-card .tag{
+  display:inline-block;
+  font-size:.72rem;
+  font-weight:600;
+  color:var(--primary-dark);
+  background:var(--primary-tint);
+  padding:3px 10px;
+  border-radius:999px;
+  margin-bottom:10px;
+}
+.prof-card h3{margin:0 0 4px;font-family:'Fraunces',serif;font-size:1.1rem;color:var(--ink);}
+.prof-card p{margin:0;color:var(--ink-soft);font-size:.85rem;line-height:1.4;}
+
+/* Chip grid (dates / times) */
+.chip-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+}
+.chip{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 10px;
+  text-align:center;
+  cursor:pointer;
+  font:inherit;
+  font-size:.88rem;
+  font-weight:500;
+  color:var(--ink);
+  transition:border-color .15s ease, background .15s ease;
+}
+.chip small{display:block;color:var(--ink-soft);font-weight:400;font-size:.74rem;margin-top:2px;}
+.chip:hover{border-color:var(--primary);background:var(--primary-tint);}
+.empty-msg{color:var(--ink-soft);font-size:.9rem;}
+
+/* Summary card */
+.summary-card{
+  background:var(--primary-tint);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  margin:14px 0 20px;
+  font-size:.92rem;
+}
+.summary-card strong{display:block;color:var(--primary-dark);font-family:'Fraunces',serif;font-size:1.05rem;margin-bottom:4px;}
+.summary-card .row{display:flex;justify-content:space-between;padding:3px 0;color:var(--ink-soft);}
+.summary-card .row b{color:var(--ink);font-weight:600;}
+
+/* Form */
+form{display:flex;flex-direction:column;gap:16px;max-width:420px;}
+label{font-size:.85rem;font-weight:500;color:var(--ink-soft);display:flex;flex-direction:column;gap:6px;}
+input{
+  font:inherit;
+  padding:11px 13px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--ink);
+  background:var(--surface);
+}
+input:focus{outline:2px solid var(--primary);outline-offset:1px;}
+.error-msg{color:var(--danger);background:var(--danger-tint);border-radius:8px;padding:9px 12px;font-size:.85rem;margin:-6px 0 0;}
+
+.btn-primary{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  padding:12px 22px;
+  border-radius:999px;
+  font:inherit;
+  font-weight:600;
+  font-size:.94rem;
+  cursor:pointer;
+  align-self:flex-start;
+}
+.btn-primary:hover{background:var(--primary-dark);}
+
+/* Confirmation */
+.confirm-box{text-align:center;padding:20px 0;}
+.confirm-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:52px;height:52px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  font-size:1.4rem;
+  margin-bottom:14px;
+}
+.confirm-box .summary-card{text-align:left;}
+.confirm-box .btn-primary{align-self:center;margin-top:8px;}
+
+.foot{
+  text-align:center;
+  color:var(--ink-soft);
+  font-size:.78rem;
+  margin-top:40px;
+}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(6,33,59,.45);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+  z-index:10;
+}
+.modal-overlay.is-open{
+  display:flex;
+}
+.modal{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:26px;
+  max-width:440px;
+  width:100%;
+  position:relative;
+  box-shadow:var(--shadow);
+  max-height:85vh;
+  overflow-y:auto;
+}
+.modal-close{
+  position:absolute;top:14px;right:14px;
+  background:none;border:none;
+  font-size:1.4rem;line-height:1;
+  color:var(--ink-soft);cursor:pointer;
+}
+.lookup-row{display:flex;gap:8px;margin:14px 0 6px;}
+.lookup-row input{flex:1;}
+.lookup-results{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+.booking-item{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:.88rem;
+}
+.booking-item .row{display:flex;justify-content:space-between;color:var(--ink-soft);}
+.booking-item .row b{color:var(--ink);}
+.btn-cancel{
+  margin-top:8px;
+  background:none;
+  border:1px solid var(--danger);
+  color:var(--danger);
+  padding:6px 12px;
+  border-radius:999px;
+  font:inherit;
+  font-size:.78rem;
+  font-weight:600;
+  cursor:pointer;
+}
+.btn-cancel:hover{background:var(--danger-tint);}
+.no-results{color:var(--ink-soft);font-size:.88rem;}
+
+@media (max-width:480px){
+  .steps li span{display:none;}
+  .top{flex-direction:column;}
+}

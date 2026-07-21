@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendamento de Consultas | Uso Interno</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <img src="logo.png" alt="Logo da empresa" class="brand-mark">
+      <div>
+        <h1>Agendamento de Consultas</h1>
+        <p>Médica do trabalho e psicóloga &middot; uso restrito a colaboradores</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-my-bookings" class="btn-ghost" type="button">Meus agendamentos</button>
+      <a href="admin.html" class="btn-ghost btn-admin">Administrador</a>
+    </div>
+  </header>
+
+  <!-- Indicador de etapas -->
+  <ol id="steps" class="steps" aria-label="Etapas do agendamento">
+    <li data-step="1" class="on">01<span>Profissional</span></li>
+    <li data-step="2">02<span>Data</span></li>
+    <li data-step="3">03<span>Horário</span></li>
+    <li data-step="4">04<span>Seus dados</span></li>
+  </ol>
+
+  <main>
+
+    <!-- Etapa 1: escolher profissional -->
+    <section id="step-1" class="step active">
+      <h2>Com quem você quer marcar?</h2>
+      <div id="professional-list" class="cards"></div>
+    </section>
+
+    <!-- Etapa 2: escolher data -->
+    <section id="step-2" class="step">
+      <button class="btn-back" data-back="1" type="button">&larr; Trocar profissional</button>
+      <h2 id="date-title">Escolha uma data</h2>
+      <p class="hint">Somente dias com horários livres aparecem na lista.</p>
+      <div id="date-list" class="chip-grid"></div>
+      <p id="date-empty" class="empty-msg" hidden>Não há datas disponíveis no momento. Fale com o RH.</p>
+    </section>
+
+    <!-- Etapa 3: escolher horário -->
+    <section id="step-3" class="step">
+      <button class="btn-back" data-back="2" type="button">&larr; Trocar data</button>
+      <h2 id="time-title">Escolha um horário</h2>
+      <div id="time-list" class="chip-grid"></div>
+    </section>
+
+    <!-- Etapa 4: dados do colaborador -->
+    <section id="step-4" class="step">
+      <button class="btn-back" data-back="3" type="button">&larr; Trocar horário</button>
+      <h2>Confirme seus dados</h2>
+
+      <div id="summary-card" class="summary-card"></div>
+
+      <form id="booking-form" novalidate>
+        <label for="input-name">Nome completo
+          <input id="input-name" name="name" type="text" autocomplete="name" required placeholder="Ex: Ana Souza">
+        </label>
+
+        <label for="input-email">E-mail corporativo
+          <input id="input-email" name="email" type="email" autocomplete="email" required placeholder="nome@empresa.com">
+        </label>
+        <p id="form-error" class="error-msg" hidden></p>
+
+        <button type="submit" class="btn-primary">Confirmar agendamento</button>
+      </form>
+    </section>
+
+    <!-- Etapa 5: confirmação -->
+    <section id="step-5" class="step">
+      <div class="confirm-box">
+        <span class="confirm-icon" aria-hidden="true">✓</span>
+        <h2>Consulta agendada!</h2>
+        <div id="confirm-summary" class="summary-card"></div>
+        <p class="hint">Guarde estas informações. Você pode conferir ou cancelar em "Meus agendamentos".</p>
+        <button id="btn-new-booking" class="btn-primary" type="button">Fazer novo agendamento</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">Sistema interno &middot; os horários são reservados automaticamente ao confirmar.</footer>
+</div>
+
+<!-- Modal: meus agendamentos -->
+<div id="modal-overlay" class="modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button id="modal-close" class="modal-close" type="button" aria-label="Fechar">&times;</button>
+    <h2 id="modal-title">Meus agendamentos</h2>
+    <p class="hint">Digite o e-mail usado no agendamento para localizar suas consultas.</p>
+    <div class="lookup-row">
+      <input id="lookup-email" type="email" placeholder="nome@empresa.com">
+      <button id="lookup-btn" class="btn-primary" type="button">Buscar</button>
+    </div>
+    <div id="lookup-results" class="lookup-results"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
