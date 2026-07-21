@@ -5,7 +5,7 @@
    os dados já venham do banco, semeados pelo supabase_schema.sql.
    ========================================================= */
 const DEFAULT_SETTINGS = {
-  companyEmailDomain: "suaempresa.com.br",
+  companyEmailDomain: "conexaorastreadores.com.br",
   daysAhead: 30
 };
 
