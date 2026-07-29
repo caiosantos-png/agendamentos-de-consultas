@@ -366,7 +366,51 @@ function renderAvailDates() {
   renderAvailSlots(prof);
 }
 
+function renderAvailDayActions(prof) {
+  const wrap = document.getElementById("avail-day-actions");
+  wrap.innerHTML = "";
+  if (!state.availDate || !prof) return;
+
+  const allSlots = getAllSlotsForDate(prof, state.availDate);
+  const freeSlots = allSlots.filter(time =>
+    !getBookings().some(b => b.profId === prof.id && b.date === state.availDate && b.time === time) &&
+    !isSlotBlocked(prof.id, state.availDate, time)
+  );
+  const blockedSlotsToday = allSlots.filter(time => isSlotBlocked(prof.id, state.availDate, time));
+  const { day } = formatDateLabel(state.availDate);
+
+  if (freeSlots.length > 0) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-small danger";
+    btn.textContent = `Bloquear o dia inteiro (${freeSlots.length} horário${freeSlots.length > 1 ? "s" : ""})`;
+    btn.addEventListener("click", () => {
+      if (!confirm(`Bloquear todos os ${freeSlots.length} horários livres de ${day}?`)) return;
+      const list = getBlockedSlots();
+      freeSlots.forEach(time => list.push({ id: `bloq_${Date.now()}_${time}`, profId: prof.id, date: state.availDate, time }));
+      saveBlockedSlots(list);
+      renderAvailSlots(prof);
+      renderDashboard();
+    });
+    wrap.appendChild(btn);
+  }
+
+  if (blockedSlotsToday.length > 0) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-small";
+    btn.textContent = `Desbloquear o dia inteiro (${blockedSlotsToday.length})`;
+    btn.addEventListener("click", () => {
+      saveBlockedSlots(getBlockedSlots().filter(x => !(x.profId === prof.id && x.date === state.availDate)));
+      renderAvailSlots(prof);
+      renderDashboard();
+    });
+    wrap.appendChild(btn);
+  }
+}
+
 function renderAvailSlots(prof) {
+  renderAvailDayActions(prof);
   const wrap = document.getElementById("avail-slot-list");
   wrap.innerHTML = "";
   if (!state.availDate || !prof) return;
