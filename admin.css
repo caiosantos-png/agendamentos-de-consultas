@@ -219,6 +219,7 @@
   padding:16px;
   margin-top:14px;
 }
+.agenda-day-actions{display:flex;gap:10px;flex-wrap:wrap;}
 
 /* ===== Painel inline (reagendar / retorno dentro da lista) ===== */
 .inline-panel{
