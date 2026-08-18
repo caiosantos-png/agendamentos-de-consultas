@@ -12,19 +12,19 @@
 .login-card{
   background:var(--surface);
   border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:32px 30px;
+  box-shadow:0 20px 48px rgba(6,33,59,.14);
+  padding:34px 32px;
   max-width:380px;
   width:100%;
   text-align:center;
 }
 .login-logo{margin:0 auto 14px;width:56px;height:56px;}
-.login-card h1{font-size:1.3rem;}
+.login-card h1{font-size:1.3rem;letter-spacing:-.01em;}
 .login-card form{text-align:left;margin-top:18px;}
 .login-card .btn-primary{align-self:stretch;text-align:center;}
-.small-hint{font-size:.76rem;margin-top:16px;line-height:1.5;}
-.back-link{display:inline-block;margin-top:14px;color:var(--primary);font-size:.85rem;text-decoration:none;}
-.back-link:hover{text-decoration:underline;}
+.small-hint{font-size:.76rem;margin-top:16px;line-height:1.55;}
+.back-link{display:inline-block;margin-top:14px;color:var(--primary);font-size:.85rem;text-decoration:none;transition:opacity var(--ease, .16s ease);}
+.back-link:hover{text-decoration:underline;opacity:.8;}
 
 /* ===== Layout geral do painel ===== */
 .admin-layout{
@@ -57,6 +57,31 @@
 .sidebar-brand strong{display:block;font-family:'Fraunces',serif;font-size:.98rem;}
 .sidebar-brand span{display:block;font-size:.72rem;color:#A9C3D9;}
 
+.current-user-box{
+  padding:10px 12px;
+  margin-bottom:14px;
+  border-radius:10px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+}
+.current-user-box strong{
+  display:block;
+  color:#fff;
+  font-size:.86rem;
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.current-user-box span{
+  display:block;
+  margin-top:3px;
+  color:var(--accent);
+  font-size:.7rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
 .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1;}
 .nav-item{
   display:flex;
@@ -73,6 +98,7 @@
   border-radius:10px;
   cursor:pointer;
   position:relative;
+  transition:background var(--ease), color var(--ease);
 }
 .nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
 .nav-item.active{background:var(--accent);color:#06213B;font-weight:600;}
@@ -93,7 +119,7 @@
   padding:32px 36px 60px;
   min-width:0;
 }
-.admin-main h2{font-size:1.4rem;margin-bottom:18px;}
+.admin-main h2{font-size:1.4rem;margin-bottom:18px;letter-spacing:-.01em;}
 .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .page-head h2{margin-bottom:0;}
 
@@ -120,12 +146,182 @@
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:var(--radius);
-  padding:20px;
-  box-shadow:var(--shadow);
+  padding:20px 22px;
+  box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));
+  transition:box-shadow var(--ease), border-color var(--ease);
 }
-.stat-card span{display:block;font-family:'Fraunces',serif;font-size:2rem;color:var(--primary-dark);font-weight:600;}
-.stat-card label{display:block;color:var(--ink-soft);font-size:.82rem;margin-top:4px;}
+.stat-card:hover{box-shadow:var(--shadow);border-color:rgba(11,76,140,.3);}
+.stat-card span{display:block;font-family:'Fraunces',serif;font-size:2rem;color:var(--primary-dark);font-weight:600;letter-spacing:-.01em;}
+.stat-card label{display:block;color:var(--ink-soft);font-size:.82rem;margin-top:5px;}
 .stat-warning span{color:var(--danger);}
+
+/* ===== Dashboard: cabeçalho ===== */
+.dash-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.dash-header h2{margin-bottom:2px;}
+.dash-header .hint{margin:0;}
+.dash-date{color:var(--ink-soft);font-size:.85rem;font-weight:500;}
+
+/* ===== Dashboard: painéis em duas colunas (Agenda de hoje/Atenção, Gráfico/Próximos) ===== */
+.dash-row{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:16px;
+  margin-top:16px;
+}
+.dash-panel{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));
+}
+.dash-panel-head{margin-bottom:14px;}
+.dash-panel-head h3{font-family:'Fraunces',serif;font-size:1.02rem;color:var(--primary-dark);margin:0;letter-spacing:-.005em;}
+.dash-panel-link{display:inline-block;margin-top:14px;font-size:.82rem;}
+
+/* ===== Dashboard: lista "Atenção" / "Próximos agendamentos" ===== */
+.dash-attention-list{display:flex;flex-direction:column;gap:2px;}
+.dash-attention-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 9px;
+  border-left:3px solid var(--line);
+  border-radius:6px;
+  background:none;
+  border-top:none;border-right:none;border-bottom:none;
+  width:100%;
+  text-align:left;
+  font:inherit;
+  cursor:default;
+  transition:background var(--ease);
+}
+button.dash-attention-item{cursor:pointer;}
+button.dash-attention-item:hover{background:var(--primary-tint);}
+.dash-attention-item.warn{border-left-color:var(--danger);}
+.dash-attention-item.info{border-left-color:var(--accent);}
+.dash-attention-item .count{font-family:'Fraunces',serif;font-weight:600;color:var(--primary-dark);font-size:1rem;min-width:20px;}
+.dash-attention-item .desc{flex:1;font-size:.84rem;color:var(--ink);}
+.dash-attention-item .arrow{color:var(--ink-soft);font-size:.8rem;}
+
+/* ===== Dashboard: gráfico de barras (últimos 7 dias) — CSS puro, sem biblioteca ===== */
+.dash-chart{display:flex;align-items:flex-end;gap:12px;height:130px;padding-top:22px;}
+.dash-chart-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.dash-chart-count{font-size:.72rem;color:var(--ink-soft);margin-bottom:5px;}
+.dash-chart-fill{width:100%;max-width:32px;background:var(--primary);border-radius:5px 5px 2px 2px;min-height:3px;}
+.dash-chart-bar.today .dash-chart-fill{background:var(--accent);}
+.dash-chart-bar label{font-size:.72rem;color:var(--ink-soft);margin-top:7px;}
+
+/* ===== Dashboard: área secundária "Disponibilidade" ===== */
+.dash-secondary{margin-top:16px;}
+.dash-secondary h3{font-family:'Fraunces',serif;font-size:.92rem;color:var(--ink-soft);font-weight:600;margin-bottom:10px;}
+.dash-secondary .kpi-grid{margin-bottom:0;}
+
+@media (max-width:860px){
+  .dash-row{grid-template-columns:1fr;}
+}
+
+/* ===== Cards de indicadores compactos (tela Agendamentos) =====
+   Mesma linguagem visual dos stat-cards do Dashboard, só que
+   menores e mais discretos — não competem com os stat-cards. */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:10px;
+  margin-bottom:18px;
+}
+.kpi-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px 15px;
+  box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  transition:box-shadow var(--ease);
+}
+.kpi-card:hover{box-shadow:var(--shadow);}
+.kpi-card span{font-family:'Fraunces',serif;font-size:1.3rem;color:var(--primary-dark);font-weight:600;}
+.kpi-card label{color:var(--ink-soft);font-size:.78rem;}
+
+/* ===== Menu de ações "⋮" (linhas da tabela de Agendamentos/Histórico) ===== */
+.dropdown-wrap{position:relative;display:inline-block;}
+.kebab-btn{
+  background:none;
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+  width:30px;height:30px;
+  border-radius:8px;
+  font-size:1.1rem;
+  line-height:1;
+  cursor:pointer;
+  transition:background var(--ease), border-color var(--ease), color var(--ease);
+}
+.kebab-btn:hover{background:var(--primary-tint);border-color:var(--primary);color:var(--primary-dark);}
+.dropdown-menu{
+  position:absolute;
+  right:0;
+  top:calc(100% + 4px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:10px;
+  box-shadow:0 12px 28px rgba(6,33,59,.16);
+  min-width:170px;
+  padding:6px;
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  animation:modal-in .14s ease;
+}
+.dropdown-menu button{
+  background:none;
+  border:none;
+  text-align:left;
+  padding:8px 10px;
+  border-radius:7px;
+  font:inherit;
+  font-size:.82rem;
+  color:var(--ink);
+  cursor:pointer;
+  transition:background var(--ease);
+}
+.dropdown-menu button:hover{background:var(--primary-tint);}
+.dropdown-menu button.danger{color:var(--danger);}
+.dropdown-menu button.danger:hover{background:var(--danger-tint);}
+
+/* ===== Feed de notificações ===== */
+.notif-feed{display:flex;flex-direction:column;gap:18px;}
+.notif-group-label{
+  font-size:.72rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.notif-group-items{display:flex;flex-direction:column;gap:8px;}
+.notif-card{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--line);
+  border-radius:12px;
+  padding:13px 15px;
+  transition:box-shadow var(--ease);
+}
+.notif-card:hover{box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));}
+.notif-card.unread{border-left-color:var(--primary);background:var(--primary-tint);}
+.notif-icon{font-size:.9rem;line-height:1.6;flex-shrink:0;}
+.notif-body{flex:1;min-width:0;}
+.notif-title{font-weight:700;color:var(--ink);font-size:.88rem;}
+.notif-patient{color:var(--ink);font-size:.86rem;margin-top:1px;}
+.notif-meta{color:var(--ink-soft);font-size:.8rem;margin-top:2px;}
+.notif-actor{color:var(--ink-soft);font-size:.76rem;margin-top:2px;font-style:italic;}
+.notif-time{color:var(--ink-soft);font-size:.74rem;white-space:nowrap;flex-shrink:0;}
 
 /* ===== Listas administrativas genéricas (profissionais, agenda, retornos, notificações) ===== */
 .admin-list{display:flex;flex-direction:column;gap:10px;}
@@ -133,13 +329,15 @@
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:12px;
-  padding:14px 16px;
+  padding:15px 17px;
+  transition:border-color var(--ease), box-shadow var(--ease);
 }
+.admin-row:hover{border-color:rgba(11,76,140,.3);box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));}
 .admin-row-main{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
-.admin-row-sub{display:block;color:var(--ink-soft);font-size:.82rem;margin-top:2px;}
+.admin-row-sub{display:block;color:var(--ink-soft);font-size:.82rem;margin-top:3px;}
 .admin-row-when{text-align:right;font-size:.86rem;color:var(--ink-soft);}
 .admin-row-when b{display:block;color:var(--ink);}
-.admin-row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.admin-row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;}
 
 .btn-small{
   background:none;
@@ -151,12 +349,13 @@
   font-size:.78rem;
   font-weight:600;
   cursor:pointer;
+  transition:background var(--ease), border-color var(--ease);
 }
 .btn-small:hover{background:var(--primary-tint);border-color:var(--primary);}
 .btn-small.danger{border-color:var(--danger);color:var(--danger);}
 .btn-small.danger:hover{background:var(--danger-tint);}
-.btn-link{background:none;border:none;color:var(--primary);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;}
-.btn-link:hover{text-decoration:underline;}
+.btn-link{background:none;border:none;color:var(--primary);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:opacity var(--ease);}
+.btn-link:hover{text-decoration:underline;opacity:.8;}
 .btn-small-primary{padding:9px 18px;font-size:.85rem;}
 
 .status-badge{
@@ -178,6 +377,8 @@
 .status-futuro{background:var(--accent-tint);color:#0B6E93;}
 .status-hoje{background:#FCEBCF;color:#9A6B0B;}
 .status-vencido{background:var(--danger-tint);color:var(--danger);}
+.status-cancelado{background:var(--danger-tint);color:var(--danger);}
+.status-falta{background:#EDEBF5;color:#5B4E9E;}
 
 /* ===== Filtros ===== */
 .filters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
@@ -190,7 +391,13 @@
   border-radius:9px;
   color:var(--ink);
   background:var(--surface);
+  transition:border-color var(--ease), box-shadow var(--ease);
 }
+.filter-field input:hover,.filter-field select:hover{border-color:rgba(11,76,140,.35);}
+.filter-field input:focus,.filter-field select:focus,.filter-field textarea:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);
+}
+.filter-field input:disabled,.filter-field select:disabled{background:var(--bg);color:var(--ink-soft);cursor:not-allowed;}
 
 /* ===== Tabela ===== */
 .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);}
@@ -199,12 +406,20 @@
   text-align:left;
   background:var(--primary-tint);
   color:var(--primary-dark);
-  padding:10px 14px;
-  font-size:.76rem;
+  padding:11px 14px;
+  font-size:.74rem;
+  font-weight:700;
   text-transform:uppercase;
-  letter-spacing:.03em;
+  letter-spacing:.04em;
+  position:sticky;
+  top:0;
+  z-index:1;
 }
-.admin-table td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:middle;}
+.admin-table td{padding:13px 14px;border-top:1px solid var(--line);vertical-align:middle;}
+.admin-table tbody tr{transition:background var(--ease);}
+.admin-table tbody tr:hover{background:var(--bg);}
+.admin-table tbody tr:nth-child(even){background:rgba(220,235,249,.25);}
+.admin-table tbody tr:nth-child(even):hover{background:var(--bg);}
 .admin-table .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
 
 /* ===== Agenda: criação de horário extra ===== */
@@ -216,8 +431,9 @@
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:var(--radius);
-  padding:16px;
+  padding:18px;
   margin-top:14px;
+  box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));
 }
 .agenda-day-actions{display:flex;gap:10px;flex-wrap:wrap;}
 
@@ -235,12 +451,19 @@
 .admin-form label{font-size:.82rem;font-weight:500;color:var(--ink-soft);display:flex;flex-direction:column;gap:5px;}
 .admin-form input,.admin-form select,.admin-form textarea{
   font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:var(--surface);
+  transition:border-color var(--ease), box-shadow var(--ease);
+}
+.admin-form input:hover,.admin-form select:hover,.admin-form textarea:hover{border-color:rgba(11,76,140,.35);}
+.admin-form input:focus,.admin-form select:focus,.admin-form textarea:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-tint);
 }
 .weekday-picker{display:flex;gap:6px;flex-wrap:wrap;}
 .weekday-picker label{
   flex-direction:row;align-items:center;gap:5px;
   border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;
+  transition:border-color var(--ease), background var(--ease);
 }
+.weekday-picker label:hover{border-color:var(--primary);background:var(--primary-tint);}
 .weekday-picker input{width:auto;}
 .shift-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 .shift-row .filter-field{flex:1;min-width:120px;}
@@ -249,14 +472,15 @@
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:var(--radius);
-  padding:20px 22px;
+  padding:22px 24px;
   max-width:480px;
   display:flex;
   flex-direction:column;
   gap:14px;
   margin-bottom:24px;
+  box-shadow:var(--shadow-sm, 0 2px 6px rgba(6,33,59,.06));
 }
-.settings-form h3{margin:0;font-family:'Fraunces',serif;font-size:1.05rem;color:var(--primary-dark);}
+.settings-form h3{margin:0;font-family:'Fraunces',serif;font-size:1.05rem;color:var(--primary-dark);letter-spacing:-.005em;}
 .settings-form label{font-size:.82rem;font-weight:500;color:var(--ink-soft);display:flex;flex-direction:column;gap:5px;}
 
 .retorno-days{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px;}
