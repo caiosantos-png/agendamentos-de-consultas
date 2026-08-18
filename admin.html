@@ -16,18 +16,18 @@
     <h1>Painel Administrativo</h1>
     <p class="hint">Acesso restrito à médica, psicóloga e gestão de pessoas.</p>
     <form id="login-form" novalidate>
-      <label for="input-username">Usuário
-        <input id="input-username" type="text" autocomplete="username" required placeholder="admin">
+      <label for="input-email">E-mail
+        <input id="input-email" type="email" autocomplete="username" required placeholder="voce@suaempresa.com.br">
       </label>
       <label for="input-password">Senha
         <input id="input-password" type="password" autocomplete="current-password" required placeholder="Digite a senha">
       </label>
-      <p id="login-error" class="error-msg" hidden>Usuário ou senha incorretos.</p>
+      <p id="login-error" class="error-msg" hidden>E-mail ou senha incorretos.</p>
       <button type="submit" class="btn-primary">Entrar</button>
     </form>
     <p class="hint small-hint">
-      Esta tela é uma trava simples contra acesso casual — não é segurança real,
-      já que este sistema roda inteiramente no navegador, sem servidor.
+      Cada pessoa acessa com sua própria conta. As permissões (Administrador,
+      Visualizador da Agenda ou Médico) são conferidas pelo sistema a cada ação.
     </p>
     <a href="index.html" class="back-link">&larr; Voltar para o agendamento</a>
   </div>
@@ -45,18 +45,23 @@
       </div>
     </div>
 
+    <div id="current-user-box" class="current-user-box"></div>
+
     <nav class="sidebar-nav">
       <button class="nav-item active" data-page="dashboard" type="button">
         <span class="nav-icon">🏠</span> Dashboard
       </button>
       <button class="nav-item" data-page="profissionais" type="button">
-        <span class="nav-icon">👨‍⚕️</span> Profissionais
+        <span class="nav-icon">🩺</span> Profissionais
       </button>
       <button class="nav-item" data-page="agenda" type="button">
-        <span class="nav-icon">📅</span> Agenda
+        <span class="nav-icon">🗓️</span> Agenda
       </button>
       <button class="nav-item" data-page="agendamentos" type="button">
         <span class="nav-icon">📝</span> Agendamentos
+      </button>
+      <button class="nav-item" data-page="historico" type="button">
+        <span class="nav-icon">📋</span> Histórico de Atendimentos
       </button>
       <button class="nav-item" data-page="retornos" type="button">
         <span class="nav-icon">🔄</span> Retornos <span id="badge-retornos" class="badge-count" hidden>0</span>
@@ -64,29 +69,87 @@
       <button class="nav-item" data-page="notificacoes" type="button">
         <span class="nav-icon">🔔</span> Notificações <span id="badge-notif" class="badge-count" hidden>0</span>
       </button>
+      <button class="nav-item" data-page="usuarios" type="button">
+        <span class="nav-icon">👥</span> Usuários
+      </button>
       <button class="nav-item" data-page="configuracoes" type="button">
         <span class="nav-icon">⚙️</span> Configurações
       </button>
     </nav>
 
+
     <button id="btn-logout" class="nav-item nav-logout" type="button">
-      <span class="nav-icon">↪</span> Sair
+      <span class="nav-icon">↪️</span> Sair
     </button>
   </aside>
 
   <main id="admin-main" class="admin-main">
+    <div id="readonly-banner" class="alert-info" hidden>
+      👁️ Modo somente leitura — seu perfil (Visualizador da Agenda) pode consultar, mas não alterar nada no sistema.
+    </div>
 
     <!-- ===== Dashboard ===== -->
     <section id="page-dashboard" class="admin-page active">
-      <h2>Dashboard</h2>
+      <div class="dash-header">
+        <div>
+          <h2>Dashboard</h2>
+          <p class="hint">Visão geral dos agendamentos</p>
+        </div>
+        <div class="dash-date" id="dash-date"></div>
+      </div>
+
       <div id="overdue-alert" class="alert-danger" hidden></div>
+
       <div class="stat-grid">
-        <div class="stat-card"><span id="stat-total">0</span><label>Total de atendimentos agendados</label></div>
-        <div class="stat-card"><span id="stat-today">0</span><label>Atendimentos de hoje</label></div>
-        <div class="stat-card"><span id="stat-free">0</span><label>Horários disponíveis</label></div>
-        <div class="stat-card"><span id="stat-blocked">0</span><label>Horários bloqueados</label></div>
+        <div class="stat-card"><span id="stat-total">0</span><label>Consultas agendadas</label></div>
+        <div class="stat-card"><span id="stat-today">0</span><label>Consultas hoje</label></div>
+        <div class="stat-card"><span id="stat-confirmadas">0</span><label>Confirmadas</label></div>
+        <div class="stat-card"><span id="stat-pendentes">0</span><label>Aguardando confirmação</label></div>
+        <div class="stat-card"><span id="stat-canceladas">0</span><label>Canceladas</label></div>
         <div class="stat-card"><span id="stat-retornos-pendentes">0</span><label>Retornos pendentes</label></div>
-        <div class="stat-card stat-warning"><span id="stat-retornos-vencidos">0</span><label>Retornos vencidos</label></div>
+      </div>
+
+      <div class="dash-row">
+        <div class="dash-panel dash-panel-wide">
+          <div class="dash-panel-head"><h3>Agenda de hoje</h3></div>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>Horário</th><th>Colaborador</th><th>Profissional</th><th>Status</th></tr></thead>
+              <tbody id="dash-today-body"></tbody>
+            </table>
+          </div>
+          <p id="dash-today-empty" class="empty-msg" hidden>Nenhuma consulta hoje.</p>
+          <button class="btn-link dash-panel-link" id="dash-go-agendamentos" type="button">Ver agenda completa →</button>
+        </div>
+
+        <div class="dash-panel">
+          <div class="dash-panel-head"><h3>Atenção</h3></div>
+          <div id="dash-attention-list" class="dash-attention-list"></div>
+          <p id="dash-attention-empty" class="empty-msg" hidden>Tudo em dia por aqui.</p>
+        </div>
+      </div>
+
+      <div class="dash-row">
+        <div class="dash-panel dash-panel-wide">
+          <div class="dash-panel-head"><h3>Agendamentos — últimos 7 dias</h3></div>
+          <div id="dash-chart" class="dash-chart"></div>
+        </div>
+
+        <div class="dash-panel">
+          <div class="dash-panel-head"><h3>Próximos agendamentos</h3></div>
+          <div id="dash-upcoming-list" class="dash-attention-list"></div>
+          <p id="dash-upcoming-empty" class="empty-msg" hidden>Nada agendado além de hoje.</p>
+          <button class="btn-link dash-panel-link" id="dash-go-upcoming" type="button">Ver todos →</button>
+        </div>
+      </div>
+
+      <div class="dash-secondary">
+        <h3>Disponibilidade</h3>
+        <div class="kpi-grid">
+          <div class="kpi-card"><span id="stat-free">0</span><label>Horários disponíveis</label></div>
+          <div class="kpi-card"><span id="stat-blocked">0</span><label>Horários bloqueados</label></div>
+        </div>
+        <button class="btn-link dash-panel-link" id="dash-go-agenda" type="button">Ver agenda →</button>
       </div>
     </section>
 
@@ -125,7 +188,14 @@
 
     <!-- ===== Agendamentos ===== -->
     <section id="page-agendamentos" class="admin-page">
-      <h2>Agendamentos</h2>
+      <div class="page-head">
+        <h2>Agendamentos</h2>
+        <button id="btn-clear-filters" class="btn-link" type="button">Limpar filtros</button>
+      </div>
+      <p class="hint">Atendimentos pendentes, confirmados e retornos em aberto. Consultas concluídas ou canceladas ficam no Histórico.</p>
+
+      <div class="kpi-grid" id="agendamentos-kpis"></div>
+
       <div class="filters">
         <label class="filter-field">Profissional
           <select id="filter-prof"><option value="todos">Todos</option></select>
@@ -144,8 +214,10 @@
             <option value="todos">Todos</option>
             <option value="pendente">Pendente</option>
             <option value="confirmado">Confirmado</option>
-            <option value="concluido">Concluído</option>
           </select>
+        </label>
+        <label class="filter-field">Tipo de Agendamento
+          <select id="filter-type"><option value="todos">Todos</option></select>
         </label>
       </div>
 
@@ -154,13 +226,50 @@
           <thead>
             <tr>
               <th>Colaborador</th><th>E-mail</th><th>Profissional</th>
-              <th>Data</th><th>Horário</th><th>Status</th><th>Ações</th>
+              <th>Data</th><th>Horário</th><th>Status</th><th>Tipo de Agendamento</th><th>Ações</th>
             </tr>
           </thead>
           <tbody id="bookings-table-body"></tbody>
         </table>
       </div>
       <p id="bookings-empty" class="empty-msg" hidden>Nenhum agendamento encontrado.</p>
+    </section>
+
+    <!-- ===== Histórico de Atendimentos ===== -->
+    <section id="page-historico" class="admin-page">
+      <div class="page-head">
+        <h2>Histórico de Atendimentos</h2>
+        <button id="btn-clear-filters-historico" class="btn-link" type="button">Limpar filtros</button>
+      </div>
+      <p class="hint">Consultas concluídas, canceladas ou com falta. Assim que um atendimento é concluído, ele sai automaticamente de Agendamentos e aparece aqui.</p>
+
+      <div class="filters">
+        <label class="filter-field">Profissional
+          <select id="hist-filter-prof"><option value="todos">Todos</option></select>
+        </label>
+        <label class="filter-field">Colaborador
+          <input type="text" id="hist-filter-search" placeholder="Nome ou e-mail">
+        </label>
+        <label class="filter-field">De
+          <input type="date" id="hist-filter-from">
+        </label>
+        <label class="filter-field">Até
+          <input type="date" id="hist-filter-to">
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Colaborador</th><th>E-mail</th><th>Profissional</th>
+              <th>Data</th><th>Horário</th><th>Status</th><th>Tipo de Agendamento</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="historico-table-body"></tbody>
+        </table>
+      </div>
+      <p id="historico-empty" class="empty-msg" hidden>Nenhum atendimento no histórico ainda.</p>
     </section>
 
     <!-- ===== Retornos ===== -->
@@ -174,11 +283,53 @@
     <!-- ===== Notificações ===== -->
     <section id="page-notificacoes" class="admin-page">
       <div class="page-head">
-        <h2>Notificações</h2>
+        <h2>Notificações <span id="notif-unread-count" class="hint" style="font-size:.85rem;"></span></h2>
         <button id="btn-mark-all-read" class="btn-link" type="button">Marcar tudo como lido</button>
       </div>
-      <div id="notif-list-full" class="admin-list"></div>
+      <div class="chip-grid" id="notif-tabs">
+        <button class="chip chip-current" data-type="todas" type="button">Todas</button>
+        <button class="chip" data-type="agendamento" type="button">Agendadas</button>
+        <button class="chip" data-type="reagendamento" type="button">Reagendadas</button>
+        <button class="chip" data-type="cancelamento" type="button">Canceladas</button>
+        <button class="chip" data-type="retorno" type="button">Retornos</button>
+      </div>
+      <div id="notif-list-full" class="notif-feed"></div>
       <p id="notif-empty" class="empty-msg" hidden>Nenhuma notificação ainda.</p>
+    </section>
+
+    <!-- ===== Usuários ===== -->
+    <section id="page-usuarios" class="admin-page">
+      <div class="page-head">
+        <h2>Usuários</h2>
+      </div>
+      <p class="hint">Contas com acesso ao painel administrativo, cada uma com um papel.</p>
+
+      <form id="user-form" class="admin-form" style="margin-bottom:22px;">
+        <label>E-mail
+          <input type="email" id="us-email" required placeholder="pessoa@suaempresa.com.br">
+        </label>
+        <label>Senha inicial
+          <input type="password" id="us-password" required minlength="6" placeholder="mínimo 6 caracteres">
+        </label>
+        <label>Nome de exibição
+          <input type="text" id="us-username" required placeholder="Como aparece no painel">
+        </label>
+        <label>Papel
+          <select id="us-role">
+            <option value="visualizador">Visualizador da Agenda</option>
+            <option value="medico">Médico</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </label>
+        <label id="us-prof-field">Profissional vinculado (obrigatório para o papel Médico)
+          <select id="us-prof"></select>
+        </label>
+        <button type="submit" class="btn-primary btn-small-primary">Criar usuário</button>
+        <p id="user-error" class="error-msg" hidden></p>
+        <p id="user-ok" class="inline-note" hidden>Usuário criado com sucesso.</p>
+      </form>
+
+      <div id="users-list" class="admin-list"></div>
     </section>
 
     <!-- ===== Configurações ===== -->
@@ -198,15 +349,12 @@
       </form>
 
       <form id="password-form" class="settings-form">
-        <h3>Trocar credenciais de acesso</h3>
-        <label>Novo usuário
-          <input type="text" id="cfg-username" required>
-        </label>
+        <h3>Alterar minha senha</h3>
         <label>Nova senha
-          <input type="password" id="cfg-password" required>
+          <input type="password" id="cfg-password" required minlength="6">
         </label>
-        <button type="submit" class="btn-primary btn-small-primary">Atualizar credenciais</button>
-        <p id="password-ok" class="inline-note" hidden>Credenciais atualizadas.</p>
+        <button type="submit" class="btn-primary btn-small-primary">Atualizar senha</button>
+        <p id="password-ok" class="inline-note" hidden>Senha atualizada.</p>
       </form>
     </section>
 
