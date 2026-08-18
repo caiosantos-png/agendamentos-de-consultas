@@ -170,6 +170,7 @@ document.getElementById("booking-form").addEventListener("submit", async e => {
     name,
     email,
     status: "pendente", // pendente | confirmado | concluido
+    type: "A pedido", // Tipo de Agendamento: definido só pelo admin depois; o colaborador nunca vê este campo
     createdAt: new Date().toISOString()
   };
 
@@ -197,7 +198,8 @@ document.getElementById("booking-form").addEventListener("submit", async e => {
   const { day } = formatDateLabel(booking.date);
   addNotification(
     "agendamento",
-    `Novo agendamento: ${booking.name} marcou com ${booking.profName} em ${day} às ${booking.time}.`
+    `Novo agendamento: ${booking.name} marcou com ${booking.profName} em ${day} às ${booking.time}.`,
+    { patientName: booking.name, profName: booking.profName, apptDate: booking.date, apptTime: booking.time }
   );
 
   submitBtn.disabled = false;
@@ -256,8 +258,16 @@ document.addEventListener("keydown", e => {
 
 function renderLookupResults(email) {
   const results = document.getElementById("lookup-results");
+  const now = new Date();
+  const todayISO = toISODate(now);
+  const nowHHMM = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  // Só agendamentos futuros e válidos: data futura, ou hoje com horário
+  // ainda não passado. Agendamentos de hoje com horário já passado, e
+  // qualquer data anterior a hoje, não entram na lista.
   const bookings = getBookings()
-    .filter(b => b.email.toLowerCase() === email.toLowerCase())
+    .filter(b => b.email.toLowerCase() === email.toLowerCase() && b.status !== "cancelado")
+    .filter(b => b.date > todayISO || (b.date === todayISO && b.time > nowHHMM))
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
   if (bookings.length === 0) {
@@ -277,6 +287,17 @@ function renderLookupResults(email) {
       <button class="btn-cancel" type="button">Cancelar agendamento</button>
     `;
     item.querySelector(".btn-cancel").addEventListener("click", () => {
+      // Trava real: mesmo que essa função seja chamada de algum outro jeito,
+      // um agendamento passado nunca é cancelado — a checagem usa a data e
+      // hora atuais no momento do clique, não confia só no botão estar visível.
+      const nowCheck = new Date();
+      const isPast = b.date < toISODate(nowCheck) ||
+        (b.date === toISODate(nowCheck) && b.time <= `${pad(nowCheck.getHours())}:${pad(nowCheck.getMinutes())}`);
+      if (isPast) {
+        alert("Este agendamento já passou e não pode mais ser cancelado.");
+        renderLookupResults(email);
+        return;
+      }
       if (!confirm("Cancelar este agendamento? O horário voltará a ficar disponível.")) return;
       const updated = getBookings().filter(x => x.id !== b.id);
       saveBookings(updated);
