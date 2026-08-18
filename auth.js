@@ -1,51 +1,96 @@
 /* =========================================================
-   CREDENCIAIS DE ACESSO DO ADMINISTRADOR
+   AUTENTICAÇÃO DO PAINEL ADMINISTRATIVO
    -----------------------------------------------------------
-   Aviso importante: este é um sistema 100% front-end (sem
-   servidor). Isso significa que esta trava de usuário/senha
-   NÃO é segurança real — qualquer pessoa com conhecimento
-   técnico pode ler este arquivo ou pular o login pelo Console
-   do navegador. Para uso interno, numa rede restrita, isso é
-   uma trava razoável contra acesso casual. Para dados
-   sensíveis de verdade, seria necessário um backend com
-   autenticação server-side.
-
-   Altere as credenciais padrão abaixo.
+   Agora usa contas reais do Supabase Auth (e não mais uma senha
+   única em JavaScript). Cada conta tem um papel (role) gravado
+   na tabela "profiles": admin | visualizador | medico.
+   A validação de permissão acontece em dois lugares:
+   1) Aqui, para mostrar/esconder telas e botões (experiência).
+   2) No banco de dados, via Row Level Security — mesmo que
+      alguém tente burlar a tela, o Supabase recusa a ação se o
+      papel do usuário não permitir (ver supabase_roles_migration.sql).
    ========================================================= */
-const AUTH_DEFAULT_CREDENTIALS = {
-  username: "admin",
-  password: "admin123"
+
+let currentUser = null; // { id, username, role, profId }
+
+function getCurrentUser() { return currentUser; }
+
+async function loginWithEmail(email, password) {
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, message: "E-mail ou senha incorretos." };
+
+  const { data: profile, error: profileError } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    await supabaseClient.auth.signOut();
+    return { ok: false, message: "Esta conta não tem um perfil de acesso configurado. Fale com o administrador." };
+  }
+
+  currentUser = { id: profile.id, username: profile.username, role: profile.role, profId: profile.prof_id };
+  return { ok: true };
+}
+
+async function restoreSession() {
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data.session) return false;
+
+  const { data: profile } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", data.session.user.id)
+    .maybeSingle();
+
+  if (!profile) {
+    await supabaseClient.auth.signOut();
+    return false;
+  }
+
+  currentUser = { id: profile.id, username: profile.username, role: profile.role, profId: profile.prof_id };
+  return true;
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+}
+
+/* =========================================================
+   PERMISSÕES POR PAPEL
+   -----------------------------------------------------------
+   Fonte única usada pelo admin.js para decidir o que mostrar,
+   habilitar ou esconder. As mesmas regras (com outra sintaxe)
+   estão espelhadas no banco via RLS — aqui é só a camada visual.
+   ========================================================= */
+const PERMISSIONS = {
+  admin: {
+    viewAllAgendas: true, manageProfessionals: true, manageUsers: true,
+    manageSettings: true, createEditDeleteSlots: true, blockUnblock: true,
+    confirmCancelReschedule: true, manageRetornos: true, markNotifRead: true,
+    manageAppointmentType: true,
+    scopedToOwnProf: false
+  },
+  visualizador: {
+    viewAllAgendas: true, manageProfessionals: false, manageUsers: false,
+    manageSettings: false, createEditDeleteSlots: false, blockUnblock: false,
+    confirmCancelReschedule: false, manageRetornos: false, markNotifRead: false,
+    manageAppointmentType: false,
+    scopedToOwnProf: false
+  },
+  medico: {
+    viewAllAgendas: true, manageProfessionals: false, manageUsers: false,
+    manageSettings: false, createEditDeleteSlots: true, blockUnblock: false,
+    confirmCancelReschedule: true, manageRetornos: true, markNotifRead: true,
+    manageAppointmentType: false, // vê o campo, mas não pode alterar (só consulta)
+    scopedToOwnProf: true
+  }
 };
 
-const AUTH_OVERRIDE_KEY = "admin_credentials_override_v1";
-const AUTH_SESSION_KEY = "admin_session_v1";
-
-// Permite trocar a senha pela tela de Configurações sem editar arquivos
-function getAdminCredentials() {
-  try {
-    const override = JSON.parse(localStorage.getItem(AUTH_OVERRIDE_KEY));
-    if (override && override.username && override.password) return override;
-  } catch { /* ignora e usa o padrão */ }
-  return AUTH_DEFAULT_CREDENTIALS;
-}
-
-function setAdminCredentials(username, password) {
-  localStorage.setItem(AUTH_OVERRIDE_KEY, JSON.stringify({ username, password }));
-}
-
-function checkLogin(username, password) {
-  const creds = getAdminCredentials();
-  return username.trim().toLowerCase() === creds.username.trim().toLowerCase() && password === creds.password;
-}
-
-function isLoggedIn() {
-  return sessionStorage.getItem(AUTH_SESSION_KEY) === "1";
-}
-
-function logLogin() {
-  sessionStorage.setItem(AUTH_SESSION_KEY, "1");
-}
-
-function logLogout() {
-  sessionStorage.removeItem(AUTH_SESSION_KEY);
+// Uso: can("blockUnblock") — devolve true/false conforme o papel do usuário logado
+function can(permission) {
+  if (!currentUser) return false;
+  return !!PERMISSIONS[currentUser.role]?.[permission];
 }
