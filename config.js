@@ -4,6 +4,10 @@
    na primeira execução (fallback de segurança). O normal é que
    os dados já venham do banco, semeados pelo supabase_schema.sql.
    ========================================================= */
+// Opções do campo "Tipo de Agendamento" — definido só pelo admin (ver admin.js).
+// "A pedido" é sempre o valor padrão, inclusive para agendamentos antigos.
+const APPOINTMENT_TYPES = ["A pedido", "Entrevista", "Externo","Indicação do gestor", "Anamnese - 1", "Anamnese - 2", "Atendimento 3M"];
+
 const DEFAULT_SETTINGS = {
   companyEmailDomain: "suaempresa.com.br",
   daysAhead: 30
@@ -51,6 +55,7 @@ let blockedSlotsCache = [];
 let extraSlotsCache = [];
 let retornosCache = [];
 let notificationsCache = [];
+let profilesCache = [];
 
 /* =========================================================
    MAPEAMENTO JS (camelCase) <-> COLUNAS DO BANCO (snake_case)
@@ -59,8 +64,8 @@ const M = {
   profToRow: p => ({ id: p.id, tag: p.tag, name: p.name, role: p.role, description: p.description, work_days: p.workDays, shifts: p.shifts, slot_minutes: p.slotMinutes }),
   profFromRow: r => ({ id: r.id, tag: r.tag, name: r.name, role: r.role, description: r.description, workDays: r.work_days, shifts: r.shifts, slotMinutes: r.slot_minutes }),
 
-  bookingToRow: b => ({ id: b.id, prof_id: b.profId, prof_name: b.profName, prof_role: b.profRole, date: b.date, time: b.time, name: b.name, email: b.email, status: b.status, created_at: b.createdAt }),
-  bookingFromRow: r => ({ id: r.id, profId: r.prof_id, profName: r.prof_name, profRole: r.prof_role, date: r.date, time: r.time, name: r.name, email: r.email, status: r.status, createdAt: r.created_at }),
+  bookingToRow: b => ({ id: b.id, prof_id: b.profId, prof_name: b.profName, prof_role: b.profRole, date: b.date, time: b.time, name: b.name, email: b.email, status: b.status, created_at: b.createdAt, appointment_type: b.type || "A pedido", rescheduled: !!b.rescheduled }),
+  bookingFromRow: r => ({ id: r.id, profId: r.prof_id, profName: r.prof_name, profRole: r.prof_role, date: r.date, time: r.time, name: r.name, email: r.email, status: r.status, createdAt: r.created_at, type: r.appointment_type || "A pedido", rescheduled: !!r.rescheduled }),
 
   slotToRow: s => ({ id: s.id, prof_id: s.profId, date: s.date, time: s.time }),
   slotFromRow: r => ({ id: r.id, profId: r.prof_id, date: r.date, time: r.time }),
@@ -68,8 +73,10 @@ const M = {
   retornoToRow: r => ({ id: r.id, booking_id: r.bookingId, prof_id: r.profId, prof_name: r.profName, employee_name: r.employeeName, employee_email: r.employeeEmail, motivo: r.motivo, note: r.note, due_date: r.dueDate, created_at: r.createdAt, status: r.status }),
   retornoFromRow: r => ({ id: r.id, bookingId: r.booking_id, profId: r.prof_id, profName: r.prof_name, employeeName: r.employee_name, employeeEmail: r.employee_email, motivo: r.motivo, note: r.note, dueDate: r.due_date, createdAt: r.created_at, status: r.status }),
 
-  notifToRow: n => ({ id: n.id, type: n.type, message: n.message, created_at: n.createdAt, read: n.read }),
-  notifFromRow: r => ({ id: r.id, type: r.type, message: r.message, createdAt: r.created_at, read: r.read })
+  notifToRow: n => ({ id: n.id, type: n.type, message: n.message, created_at: n.createdAt, read: n.read, patient_name: n.patientName || null, prof_name: n.profName || null, appt_date: n.apptDate || null, appt_time: n.apptTime || null, from_time: n.fromTime || null, actor: n.actor || null }),
+  notifFromRow: r => ({ id: r.id, type: r.type, message: r.message, createdAt: r.created_at, read: r.read, patientName: r.patient_name || null, profName: r.prof_name || null, apptDate: r.appt_date || null, apptTime: r.appt_time || null, fromTime: r.from_time || null, actor: r.actor || null }),
+
+  profileFromRow: r => ({ id: r.id, username: r.username, role: r.role, profId: r.prof_id })
 };
 
 /* =========================================================
@@ -126,7 +133,7 @@ function saveBookings(list) {
   syncArrayDiff("bookings", prev, list, M.bookingToRow);
 }
 function isSlotTaken(profId, date, time, ignoreId) {
-  return bookingsCache.some(b => b.profId === profId && b.date === date && b.time === time && b.id !== ignoreId);
+  return bookingsCache.some(b => b.profId === profId && b.date === date && b.time === time && b.id !== ignoreId && b.status !== "cancelado");
 }
 
 // Criação "segura" de agendamento: usa o INSERT direto no Supabase (não o diff
@@ -186,17 +193,50 @@ function saveNotifications(list) {
   notificationsCache = list;
   syncArrayDiff("notifications", prev, list, M.notifToRow);
 }
-function addNotification(type, message) {
+function addNotification(type, message, meta = {}) {
   const n = {
     id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    type, message, createdAt: new Date().toISOString(), read: false
+    type, message, createdAt: new Date().toISOString(), read: false,
+    patientName: meta.patientName || null,
+    profName: meta.profName || null,
+    apptDate: meta.apptDate || null,
+    apptTime: meta.apptTime || null,
+    fromTime: meta.fromTime || null,
+    actor: meta.actor || null
   };
   saveNotifications([n, ...notificationsCache].slice(0, 200));
 }
 
 /* =========================================================
-   CONFIGURAÇÕES GERAIS
+   USUÁRIOS DO PAINEL (tabela "profiles")
+   -----------------------------------------------------------
+   A criação de conta em si (e-mail/senha) acontece via Supabase
+   Auth (ver auth.js/admin.js); aqui só gerenciamos o "perfil de
+   acesso" — o papel (role) e, para médicos, a agenda vinculada.
+   Quem pode LER e ESCREVER aqui é controlado pelo RLS: cada
+   pessoa só vê o próprio perfil, exceto o admin, que vê todos.
    ========================================================= */
+function getProfiles() { return profilesCache.map(p => ({ ...p })); }
+
+async function updateProfile(id, changes) {
+  const row = {};
+  if (changes.username !== undefined) row.username = changes.username;
+  if (changes.role !== undefined) row.role = changes.role;
+  if (changes.profId !== undefined) row.prof_id = changes.profId;
+  const { error } = await supabaseClient.from("profiles").update(row).eq("id", id);
+  if (error) { console.error("Erro ao atualizar usuário:", error); return false; }
+  profilesCache = profilesCache.map(p => (p.id === id ? { ...p, ...changes } : p));
+  return true;
+}
+
+async function deleteProfile(id) {
+  const { error } = await supabaseClient.from("profiles").delete().eq("id", id);
+  if (error) { console.error("Erro ao remover usuário:", error); return false; }
+  profilesCache = profilesCache.filter(p => p.id !== id);
+  return true;
+}
+
+
 function getSettings() { return settingsCache; }
 function saveSettings(settings) {
   settingsCache = settings;
@@ -218,15 +258,28 @@ let dataChangeListeners = [];
 function onDataChange(fn) { dataChangeListeners.push(fn); }
 function notifyDataChange() { dataChangeListeners.forEach(fn => fn()); }
 
+// Usado para detectar quando um evento de tempo real é só o "eco" da nossa
+// própria escrita (que já atualizamos localmente na hora) — nesse caso os
+// dados buscados de novo são idênticos aos que já temos, e não há motivo
+// para mandar as telas se redesenharem outra vez.
+function snapshotAllData() {
+  return JSON.stringify({
+    professionalsCache, settingsCache, bookingsCache,
+    blockedSlotsCache, extraSlotsCache, retornosCache, notificationsCache, profilesCache
+  });
+}
+let lastSnapshot = null;
+
 async function fetchAllTables() {
-  const [profRes, settRes, bookRes, blockRes, extraRes, retRes, notifRes] = await Promise.all([
+  const [profRes, settRes, bookRes, blockRes, extraRes, retRes, notifRes, profilesRes] = await Promise.all([
     supabaseClient.from("professionals").select("*"),
     supabaseClient.from("settings").select("*").eq("id", 1).maybeSingle(),
     supabaseClient.from("bookings").select("*"),
     supabaseClient.from("blocked_slots").select("*"),
     supabaseClient.from("extra_slots").select("*"),
     supabaseClient.from("retornos").select("*"),
-    supabaseClient.from("notifications").select("*")
+    supabaseClient.from("notifications").select("*"),
+    supabaseClient.from("profiles").select("*")
   ]);
 
   if (profRes.error) {
@@ -257,6 +310,7 @@ async function fetchAllTables() {
   extraSlotsCache = (extraRes.data || []).map(M.slotFromRow);
   retornosCache = (retRes.data || []).map(M.retornoFromRow);
   notificationsCache = (notifRes.data || []).map(M.notifFromRow);
+  profilesCache = (profilesRes.data || []).map(M.profileFromRow);
   return true;
 }
 
@@ -264,14 +318,22 @@ function subscribeRealtime() {
   supabaseClient.channel("public:all-tables")
     .on("postgres_changes", { event: "*", schema: "public" }, () => {
       // Uma mudança em qualquer tabela chegou (de qualquer navegador) —
-      // busca tudo de novo e avisa as telas para se redesenharem.
-      fetchAllTables().then(notifyDataChange);
+      // busca tudo de novo e, só se algo realmente mudou em relação ao
+      // que já tínhamos, avisa as telas para se redesenharem.
+      fetchAllTables().then(() => {
+        const snap = snapshotAllData();
+        if (snap !== lastSnapshot) {
+          lastSnapshot = snap;
+          notifyDataChange();
+        }
+      });
     })
     .subscribe();
 }
 
 const dataReadyPromise = (async () => {
   const ok = await fetchAllTables();
+  lastSnapshot = snapshotAllData();
   subscribeRealtime();
   notifyDataChange();
   return ok;
